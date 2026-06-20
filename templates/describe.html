@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Describe Crypto Footprint — {{ app_title }}{% endblock %}
+
+{% block content %}
+<div class="breadcrumb"><a href="/">Dashboard</a> &rsaquo; <a href="/assessments/{{ assessment.id }}">{{ assessment.org_name }}</a> &rsaquo; Describe</div>
+<h1>Describe Your Cryptographic Footprint</h1>
+<p class="muted">Describe your organization's use of cryptographic algorithms in plain language. Claude will extract a structured inventory, which you'll review before the assessment engine runs.</p>
+
+{% if error %}
+<div class="alert-error">{{ error }}</div>
+{% endif %}
+
+<div class="info-box">
+  <strong>Scope this tool:</strong> does NOT implement, test, or break any cryptography. It extracts algorithm names from your description and classifies them against NIST FIPS 203/204/205.
+</div>
+
+<form method="post" action="/assessments/{{ assessment.id }}/describe" class="form-card">
+  <div class="form-group">
+    <label for="footprint_description">Cryptographic Footprint Description</label>
+    <p class="field-hint">Include: TLS versions and cipher suites, certificate types and key sizes, key exchange protocols, code signing algorithms, data-at-rest encryption, hash functions used for integrity or MACs, any PQC migrations already in progress.</p>
+    <textarea
+      id="footprint_description"
+      name="footprint_description"
+      rows="10"
+      required
+      class="form-input mono"
+      placeholder="Example:
+Our web services use TLS 1.2 with RSA-2048 for key exchange and AES-128-GCM for encryption.
+All X.509 certificates are signed with RSA-2048.
+Internal microservices use ECDHE with P-256 curves.
+Code signing uses ECDSA-P256.
+Data at rest is encrypted with AES-256-CBC.
+Integrity verification uses SHA-256 HMAC.
+We have not yet evaluated post-quantum alternatives."
+    >{% if assessment.footprint_description %}{{ assessment.footprint_description }}{% endif %}</textarea>
+  </div>
+
+  <div class="org-context">
+    <strong>Organization:</strong> {{ assessment.org_name }} &middot;
+    <strong>Sensitivity:</strong> {{ assessment.data_sensitivity }} &middot;
+    <strong>Retention:</strong> {{ assessment.data_retention_years }} years
+  </div>
+
+  <div class="form-actions">
+    <button type="submit" class="button-primary">Extract Inventory &rarr;</button>
+    <a href="/" class="button-secondary">Cancel</a>
+  </div>
+</form>
+{% endblock %}

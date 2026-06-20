@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}New Assessment — {{ app_title }}{% endblock %}
+
+{% block content %}
+<div class="breadcrumb"><a href="/">Dashboard</a> &rsaquo; New Assessment</div>
+<h1>New Cryptographic Assessment</h1>
+<p class="muted">Provide your organization's profile. On the next screen you'll describe your cryptographic footprint in plain language.</p>
+
+{% if error %}
+<div class="alert-error">{{ error }}</div>
+{% endif %}
+
+<form method="post" action="/assessments/new" class="form-card">
+  <div class="form-section">
+    <h2>Organization Profile</h2>
+
+    <div class="form-group">
+      <label for="org_name">Organization Name <span class="required">*</span></label>
+      <input type="text" id="org_name" name="org_name" required placeholder="e.g., Acme Defense Systems" class="form-input">
+    </div>
+
+    <div class="form-group">
+      <label for="org_type">Organization Type</label>
+      <select id="org_type" name="org_type" class="form-input">
+        <option value="">Select type...</option>
+        <option value="Federal Agency">Federal Agency</option>
+        <option value="Defense Contractor">Defense Contractor</option>
+        <option value="Healthcare Organization">Healthcare Organization</option>
+        <option value="Financial Institution">Financial Institution</option>
+        <option value="Critical Infrastructure">Critical Infrastructure Operator</option>
+        <option value="Commercial Technology Company">Commercial Technology Company</option>
+        <option value="Research Institution">Research Institution</option>
+        <option value="Other">Other</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="org_description">Organization Description</label>
+      <textarea id="org_description" name="org_description" rows="2" class="form-input" placeholder="Briefly describe what the organization does and why cryptography matters to its mission."></textarea>
+    </div>
+  </div>
+
+  <div class="form-section">
+    <h2>Data Profile</h2>
+    <p class="muted small">This determines the HNDL exposure score — distinct from algorithm compliance status.</p>
+
+    <div class="form-group">
+      <label for="data_sensitivity">Data Sensitivity Level</label>
+      <select id="data_sensitivity" name="data_sensitivity" class="form-input">
+        {% for level, description in sensitivity_levels.items() %}
+        <option value="{{ level }}" {% if level == "CONFIDENTIAL" %}selected{% endif %}>{{ description }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="data_retention_years">Data Retention Requirement (years)</label>
+      <input type="number" id="data_retention_years" name="data_retention_years" min="1" max="100" value="7" class="form-input" style="max-width:120px">
+      <p class="field-hint">How many years must the data remain secret? This determines overlap with the estimated CRQC window (approximately 10–30 years — ⚠ no authoritative consensus).</p>
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <button type="submit" class="button-primary">Continue: Describe Crypto Footprint &rarr;</button>
+    <a href="/" class="button-secondary">Cancel</a>
+  </div>
+</form>
+{% endblock %}

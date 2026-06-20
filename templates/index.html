@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — {{ app_title }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>PQC Migration Assessment Dashboard</h1>
+  <p class="muted">Identify quantum-vulnerable cryptography and plan your migration to NIST FIPS 203/204/205.</p>
+</div>
+
+<div class="toolbar">
+  <a href="/assessments/new" class="button-primary">+ New Assessment</a>
+  <form method="post" action="/seed" style="display:inline;margin-left:0.75rem">
+    <button type="submit" class="button-secondary">Load Demo Scenarios</button>
+  </form>
+</div>
+
+<div class="standards-bar">
+  <div class="std-chip std-pqc">&#10003; {{ fips_203 }}</div>
+  <div class="std-chip std-pqc">&#10003; {{ fips_204 }}</div>
+  <div class="std-chip std-pqc">&#10003; {{ fips_205 }}</div>
+  <div class="std-chip std-verify">&#9888; OMB migration deadlines — ⚠ VERIFY</div>
+</div>
+
+{% if assessments %}
+<div class="assessments-grid">
+  {% for a in assessments %}
+  <a href="/assessments/{{ a.id }}" class="assessment-card">
+    <div class="card-top">
+      <div>
+        <div class="card-org">{{ a.org_name }}</div>
+        <div class="card-type muted">{{ a.org_type or "Organization" }}</div>
+      </div>
+      {% if a.hndl_tier %}
+      <span class="hndl-badge hndl-{{ a.hndl_tier | lower }}">{{ a.hndl_tier }}</span>
+      {% else %}
+      <span class="hndl-badge hndl-pending">PENDING</span>
+      {% endif %}
+    </div>
+
+    {% if a.items %}
+    <div class="card-stats">
+      <span class="stat-item stat-red">&#9888; {{ a.critical_count }} critical</span>
+      <span class="stat-item stat-green">&#10003; {{ a.pqc_approved_count + a.quantum_safe_count }} safe</span>
+      <span class="stat-item stat-amber">&#8593; {{ a.reduced_count }} reduced</span>
+    </div>
+    {% endif %}
+
+    <div class="card-meta">
+      {{ a.data_sensitivity }} &middot; {{ a.data_retention_years }}-year retention
+    </div>
+
+    {% if a.hndl_tier %}
+    <div class="hndl-score-bar">
+      <div class="hndl-score-fill hndl-fill-{{ a.hndl_tier | lower }}" style="width:{{ a.hndl_score }}%"></div>
+    </div>
+    <div class="card-score-label">HNDL Score: {{ a.hndl_score }}/100</div>
+    {% endif %}
+  </a>
+  {% endfor %}
+</div>
+
+{% else %}
+<div class="empty-state">
+  <p style="font-size:1.1rem;font-weight:600">No assessments yet.</p>
+  <p>Describe your organization's cryptographic footprint to get a quantum vulnerability assessment and migration roadmap.</p>
+  <div style="margin-top:1.5rem;display:flex;gap:1rem;justify-content:center">
+    <a href="/assessments/new" class="button-primary">+ New Assessment</a>
+    <form method="post" action="/seed">
+      <button type="submit" class="button-secondary">Load Demo Scenarios</button>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+<div class="info-cards">
+  <div class="info-card">
+    <h3>&#128272; What is Harvest-Now, Decrypt-Later?</h3>
+    <p>Adversaries are collecting encrypted network traffic today. Once a cryptographically-relevant quantum computer (CRQC) exists, they replay stored ciphertext and decrypt it. Data encrypted with RSA, ECDH, or ECDSA is already at risk — even though the breach hasn't happened yet.</p>
+  </div>
+  <div class="info-card">
+    <h3>&#128196; NIST PQC Standards (August 2024)</h3>
+    <p><strong>FIPS 203 (ML-KEM)</strong> — replaces RSA/ECDH for key exchange.<br>
+    <strong>FIPS 204 (ML-DSA)</strong> — replaces RSA/ECDSA for digital signatures.<br>
+    <strong>FIPS 205 (SLH-DSA)</strong> — hash-based signature alternative (different math from ML-DSA).</p>
+  </div>
+  <div class="info-card">
+    <h3>&#128203; Compliance vs. Exposure</h3>
+    <p>These are distinct questions. <strong>Compliance</strong> asks whether your algorithms match what NIST mandates. <strong>HNDL Exposure</strong> asks how much harvested ciphertext is at risk before a CRQC arrives — determined by algorithm vulnerability × data sensitivity × retention requirements.</p>
+  </div>
+</div>
+{% endblock %}

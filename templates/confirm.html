@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Confirm Inventory — {{ app_title }}{% endblock %}
+
+{% block content %}
+<div class="breadcrumb"><a href="/">Dashboard</a> &rsaquo; <a href="/assessments/{{ assessment.id }}">{{ assessment.org_name }}</a> &rsaquo; Confirm</div>
+<h1>Review Extracted Inventory</h1>
+<p class="muted">Claude extracted these algorithm entries from your description. Review them before the deterministic assessment engine classifies each one.</p>
+
+<div class="confirm-notice">
+  <strong>&#9888; Human confirmation required</strong><br>
+  The compliance determination runs only after you confirm this inventory. Claude's role ends here — all classification is performed by a deterministic rules engine against NIST FIPS 203/204/205.
+</div>
+
+{% if proposed %}
+<table class="data-table">
+  <thead>
+    <tr>
+      <th>Component</th>
+      <th>Algorithm</th>
+      <th>Use Case</th>
+      <th>Key Size</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for item in proposed %}
+    <tr>
+      <td>{{ item.component }}</td>
+      <td><code>{{ item.algorithm }}</code></td>
+      <td>{{ item.use_case }}</td>
+      <td>{% if item.key_size %}{{ item.key_size }} bits{% else %}—{% endif %}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<p class="muted small" style="margin-top:0.75rem">
+  {{ proposed | length }} algorithm entr{{ "ies" if proposed | length != 1 else "y" }} extracted.
+  If this looks incorrect, <a href="/assessments/{{ assessment.id }}/describe">go back and revise your description</a>.
+</p>
+
+<form method="post" action="/assessments/{{ assessment.id }}/confirm" style="margin-top:1.5rem">
+  <div class="form-actions">
+    <button type="submit" class="button-primary">Confirm and Run Assessment &rarr;</button>
+    <a href="/assessments/{{ assessment.id }}/describe" class="button-secondary">&#8592; Revise Description</a>
+  </div>
+</form>
+
+{% else %}
+<div class="alert-error">No algorithms were extracted. <a href="/assessments/{{ assessment.id }}/describe">Go back and add more detail.</a></div>
+{% endif %}
+
+{% endblock %}

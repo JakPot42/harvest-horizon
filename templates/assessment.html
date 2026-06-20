@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block title %}{{ assessment.org_name }} — {{ app_title }}{% endblock %}
+
+{% block content %}
+<div class="breadcrumb"><a href="/">Dashboard</a> &rsaquo; {{ assessment.org_name }}</div>
+
+{% if error %}
+<div class="alert-error">{{ error }}</div>
+{% endif %}
+
+<!-- Header -->
+<div class="assessment-header">
+  <div>
+    <h1>{{ assessment.org_name }}</h1>
+    <p class="muted">{{ assessment.org_type }} &middot; {{ assessment.data_sensitivity }} sensitivity &middot; {{ assessment.data_retention_years }}-year retention</p>
+    {% if assessment.org_description %}
+    <p class="org-desc">{{ assessment.org_description }}</p>
+    {% endif %}
+  </div>
+  <div class="header-actions">
+    <a href="/assessments/{{ assessment.id }}/report.pdf" class="button-secondary">&#8595; PDF Report</a>
+  </div>
+</div>
+
+<!-- Two-column scorecard -->
+<div class="scorecard-row">
+  <!-- HNDL Exposure -->
+  <div class="score-card score-{{ assessment.hndl_tier | lower if assessment.hndl_tier else 'pending' }}">
+    <div class="score-label">Harvest-Now Exposure (HNDL)</div>
+    <div class="score-tier">{{ assessment.hndl_tier or "UNASSESSED" }}</div>
+    <div class="score-number">{{ assessment.hndl_score }}<span class="score-max">/100</span></div>
+    <div class="score-bar-wrap">
+      <div class="score-bar-fill" style="width:{{ assessment.hndl_score }}%"></div>
+    </div>
+    <p class="score-note">Data sensitivity × retention requirement × algorithm vulnerability.<br>
+    <strong>Distinct from compliance status.</strong> See rationale below.</p>
+  </div>
+
+  <!-- Compliance Summary -->
+  <div class="score-card score-compliance">
+    <div class="score-label">Compliance Status</div>
+    <div class="score-tier compliance-{{ assessment.compliance_tier | lower | replace('_','-') }}">{{ assessment.compliance_tier | replace("_"," ") }}</div>
+    <div class="compliance-breakdown">
+      <div class="cb-row cb-red"><span class="cb-count">{{ assessment.non_compliant_count }}</span> non-compliant / deprecated</div>
+      <div class="cb-row cb-amber"><span class="cb-count">{{ assessment.reduced_count }}</span> reduced security</div>
+      <div class="cb-row cb-green"><span class="cb-count">{{ assessment.pqc_approved_count + assessment.quantum_safe_count }}</span> quantum-safe / PQC approved</div>
+    </div>
+    <p class="score-note">Classification per NIST FIPS 203/204/205 and NIST catalog.<br>
+    Determined by deterministic engine — not by Claude.</p>
+  </div>
+</div>
+
+<!-- HNDL Rationale -->
+{% if assessment.hndl_rationale %}
+<div class="rationale-box">
+  <h3>&#128200; HNDL Exposure Analysis</h3>
+  <p>{{ assessment.hndl_rationale }}</p>
+  <p class="muted small">⚠ CRQC timeline is disputed — estimates range approximately 10–30 years (no authoritative consensus). This score treats data longevity as a proxy for harvest-window risk.</p>
+</div>
+{% endif %}
+
+<!-- Algorithm Inventory -->
+<h2>Cryptographic Algorithm Inventory</h2>
+<p class="muted small">Classified by the deterministic assessment engine against NIST FIPS 203/204/205. Claude extracted the algorithm names; the engine makes every compliance determination.</p>
+
+{% if items %}
+<table class="data-table">
+  <thead>
+    <tr>
+      <th>Component</th>
+      <th>Algorithm</th>
+      <th>Use Case</th>
+      <th>Quantum Vulnerability</th>
+      <th>Compliance Status</th>
+      <th>PQC Replacement</th>
+      <th>Citation</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for item in items %}
+    <tr class="row-{{ item.compliance_color }}">
+      <td>{{ item.component }}</td>
+      <td><code>{{ item.algorithm }}</code></td>
+      <td>{{ item.use_case }}</td>
+      <td>
+        <span class="badge badge-{{ item.vulnerability_color }}">{{ item.quantum_vulnerability }}</span>
+      </td>
+      <td>
+        <span class="badge badge-{{ item.compliance_color }}">{{ item.compliance_status | replace("_"," ") }}</span>
+      </td>
+      <td>
+        {% if item.replacements_list %}
+          {% for r in item.replacements_list %}
+          <code class="pqc-chip">{{ r }}</code>
+          {% endfor %}
+        {% else %}
+          <span class="muted">—</span>
+        {% endif %}
+      </td>
+      <td class="citation-cell">{{ item.fips_citation }}</td>
+    </tr>
+    {% if item.engine_rationale %}
+    <tr class="rationale-row">
+      <td colspan="7" class="rationale-cell">{{ item.engine_rationale }}</td>
+    </tr>
+    {% endif %}
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<div class="empty-state">No algorithm inventory. <a href="/assessments/{{ assessment.id }}/describe">Add a crypto footprint description.</a></div>
+{% endif %}
+
+<!-- Migration Roadmap -->
+<div class="roadmap-section">
+  <h2>Migration Roadmap</h2>
+  {% if assessment.roadmap_text %}
+  <p class="muted small">
+    Drafted by Claude Haiku on {{ assessment.roadmap_generated_at.strftime('%B %d, %Y') if assessment.roadmap_generated_at else "generation date unknown" }}.
+    Claude cites FIPS 203/204/205 for all recommendations and flags unverified OMB deadlines with ⚠ VERIFY.
+  </p>
+  <a href="/assessments/{{ assessment.id }}/roadmap" class="button-primary">View Full Roadmap</a>
+  {% else %}
+  <p class="muted">Generate a Claude-drafted migration roadmap citing FIPS 203/204/205 for each recommendation. Claude flags any OMB deadline years with ⚠ VERIFY.</p>
+  <form method="post" action="/assessments/{{ assessment.id }}/roadmap" style="display:inline">
+    <button type="submit" class="button-primary">Generate Migration Roadmap</button>
+  </form>
+  {% endif %}
+  <a href="/assessments/{{ assessment.id }}/report.pdf" class="button-secondary" style="margin-left:0.75rem">&#8595; PDF Report</a>
+</div>
+
+{% endblock %}

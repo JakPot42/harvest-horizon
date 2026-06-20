@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}{{ app_title }}{% endblock %}</title>
+  <link rel="stylesheet" href="/static/css/app.css">
+</head>
+<body>
+  <header class="site-header">
+    <a href="/" class="site-logo">&#128274; {{ app_title }}</a>
+    <span class="site-tagline">{{ app_subtitle }}</span>
+    <nav class="site-nav">
+      <a href="/">Dashboard</a>
+      <a href="/assessments/new">New Assessment</a>
+      <a href="/api/stats">Status</a>
+    </nav>
+  </header>
+
+  {% if demo_mode %}
+  <div class="demo-banner">{{ demo_banner }}</div>
+  {% endif %}
+
+  <main class="main-content">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="site-footer">
+    <p>{{ disclaimer }}</p>
+    <p style="margin-top:0.3rem">{{ scope_notice }}</p>
+  </footer>
+</body>
+</html>
