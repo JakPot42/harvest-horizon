@@ -155,6 +155,8 @@ def describe_form(request: Request, assessment_id: int, db: Session = Depends(ge
     return templates.TemplateResponse(request, "describe.html", _ctx({"assessment": assessment}))
 
 
+_MAX_FOOTPRINT_CHARS = 5_000
+
 @app.post("/assessments/{assessment_id}/describe")
 def run_extraction(
     request: Request,
@@ -165,6 +167,15 @@ def run_extraction(
     assessment = db.get(Assessment, assessment_id)
     if not assessment:
         raise HTTPException(status_code=404, detail="Assessment not found")
+
+    footprint_description = footprint_description.strip()
+    if len(footprint_description) > _MAX_FOOTPRINT_CHARS:
+        return templates.TemplateResponse(
+            request, "describe.html",
+            _ctx({"assessment": assessment,
+                  "error": f"Description too long ({len(footprint_description):,} chars). Maximum is {_MAX_FOOTPRINT_CHARS:,} characters."}),
+            status_code=422,
+        )
 
     # Determine demo_key for pre-baked extraction in DEMO_MODE
     demo_key = _demo_key_for(assessment.org_name)
